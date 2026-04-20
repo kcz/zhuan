@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import type { ZhuanEntry } from '../types'
+import { readJson, writeJson } from '../lib/storage'
+import builtinExtraMeaningsRaw from '../data/builtinExtraMeanings.json'
 import { EntryGlyph } from './EntryGlyph'
 
 const Field = ({ label, value }: { label: string; value: string | undefined }) => {
@@ -37,6 +40,12 @@ const FieldList = ({
   )
 }
 
+type EntryAnnotations = Record<string, { extraMeaning?: string }>
+
+const EXTRA_MEANING_KEY = 'zhuan-learn.entryExtraMeaning.v1'
+
+const builtinExtraMeanings = builtinExtraMeaningsRaw as Record<string, string>
+
 export const EntryDetail = ({
   entry,
   onNavigate,
@@ -44,6 +53,12 @@ export const EntryDetail = ({
   entry: ZhuanEntry | null
   onNavigate?: (hanzi: string) => void
 }) => {
+  const [annotations, setAnnotations] = useState<EntryAnnotations>(() => {
+    return readJson<EntryAnnotations>(EXTRA_MEANING_KEY) ?? {}
+  })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
+
   if (!entry) {
     return (
       <div className="detail">
@@ -51,6 +66,12 @@ export const EntryDetail = ({
       </div>
     )
   }
+
+  const localOverride = typeof annotations[entry.id]?.extraMeaning === 'string' ? annotations[entry.id]!.extraMeaning! : ''
+  const hasLocalOverride = Boolean(localOverride.trim())
+  const builtinMeaning = typeof builtinExtraMeanings[entry.id] === 'string' ? builtinExtraMeanings[entry.id]! : ''
+  const effectiveMeaning = localOverride.trim() ? localOverride : builtinMeaning
+  const isEditing = editingId === entry.id
 
   return (
     <div className="detail">
@@ -63,6 +84,81 @@ export const EntryDetail = ({
             {entry.origin === 'custom' ? <span className="tag tagCustom">自定义</span> : null}
           </div>
           {entry.meaning ? <div className="detailMeaning">{entry.meaning}</div> : null}
+          <div className="detailExtra">
+            <div className="field fieldVertical">
+              <div className="fieldLabel">释义</div>
+              <div className="fieldValue">
+                {isEditing ? (
+                  <div>
+                    <textarea
+                      className="textarea"
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      placeholder="补充你对这个字的释义/用法/引申等（仅保存在本地）"
+                      rows={4}
+                    />
+                    <div className="fieldActions">
+                      <button
+                        type="button"
+                        className="btnPrimary"
+                        onClick={() => {
+                          const next = draft.trim()
+                          const updated: EntryAnnotations = { ...annotations }
+                          if (next) updated[entry.id] = { extraMeaning: next }
+                          else delete updated[entry.id]
+                          setAnnotations(updated)
+                          writeJson(EXTRA_MEANING_KEY, updated)
+                          setEditingId(null)
+                        }}
+                      >
+                        保存
+                      </button>
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() => {
+                          setEditingId(null)
+                        }}
+                      >
+                        取消
+                      </button>
+                      {hasLocalOverride ? (
+                        <button
+                          type="button"
+                          className="btnDanger"
+                          onClick={() => {
+                            const updated: EntryAnnotations = { ...annotations }
+                            delete updated[entry.id]
+                            setAnnotations(updated)
+                            writeJson(EXTRA_MEANING_KEY, updated)
+                            setEditingId(null)
+                          }}
+                        >
+                          清除
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {effectiveMeaning ? <div>{effectiveMeaning}</div> : <span className="muted">暂无</span>}
+                    <div className="fieldActions">
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() => {
+                          setDraft(effectiveMeaning)
+                          setEditingId(entry.id)
+                        }}
+                      >
+                        {effectiveMeaning ? '编辑释义' : '新增释义'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

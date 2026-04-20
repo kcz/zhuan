@@ -481,6 +481,10 @@
   color: var(--text-h);
 }
 
+.detailExtra {
+  margin-top: 10px;
+}
+
 .detailKeywords {
   margin-top: 8px;
   font-size: 13px;
@@ -501,6 +505,15 @@
   align-items: start;
 }
 
+.fieldVertical {
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.fieldVertical .fieldLabel {
+  padding-top: 0;
+}
+
 .fieldLabel {
   font-size: 13px;
   color: var(--text);
@@ -512,6 +525,18 @@
   color: var(--text-h);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.fieldActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.muted {
+  color: var(--text);
+  font-size: 13px;
 }
 
 .fieldValueWrap {
