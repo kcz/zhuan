@@ -69,7 +69,7 @@ export const EntryDetail = ({
 
   const localOverride = typeof annotations[entry.id]?.extraMeaning === 'string' ? annotations[entry.id]!.extraMeaning! : ''
   const hasLocalOverride = Boolean(localOverride.trim())
-  const builtinMeaning = typeof builtinExtraMeanings[entry.id] === 'string' ? builtinExtraMeanings[entry.id]! : ''
+  const builtinMeaning = typeof builtinExtraMeanings[entry.hanzi] === 'string' ? builtinExtraMeanings[entry.hanzi]! : ''
   const effectiveMeaning = localOverride.trim() ? localOverride : builtinMeaning
   const isEditing = editingId === entry.id
 
